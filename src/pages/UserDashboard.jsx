@@ -1,111 +1,72 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import DashboardCard from "../components/DashboardCard";
-import { userSummary } from "../data/userData";
-import { initialBooks } from "../data/booksData";
+import Layout from "../components/Layout";
+import StatCard from "../components/StatCard";
+import { useLibrary } from "../context/LibraryContext";
+import { BookOpen, Clock, CheckCircle, Search } from "lucide-react";
 
-function UserDashboard() {
-  const navigate = useNavigate();
-  const [books, setBooks] = useState(initialBooks);
-
-  const issueBook = (id) => {
-    setBooks(
-      books.map((book) =>
-        book.id === id ? { ...book, available: false } : book
-      )
-    );
-  };
-
-  const returnBook = (id) => {
-    setBooks(
-      books.map((book) =>
-        book.id === id ? { ...book, available: true } : book
-      )
-    );
-  };
+export default function UserDashboard() {
+  const { books, toggleStatus } = useLibrary();
+  const myIssued = books.filter(b => b.status === "Issued").length;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+    <Layout>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white">Student Portal</h1>
+        <p className="text-slate-400 mt-1">Browse the catalog and manage your reading list.</p>
+      </div>
 
-      <Header
-        title="User Dashboard"
-        subtitle="Library User Overview"
-        rightAction={
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate("/user-profile")}
-              className="bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-lg"
-            >
-              Profile
-            </button>
-            <button
-              onClick={() => navigate("/")}
-              className="bg-red-600 hover:bg-red-700 transition px-4 py-2 rounded-lg"
-            >
-              Logout
-            </button>
-          </div>
-        }
-      />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <StatCard title="My Active Books" value={myIssued} icon={BookOpen} color="blue" />
+        <StatCard title="Return Due Date" value="Feb 28" icon={Clock} color="amber" />
+        <StatCard title="Pending Fines" value="$0.00" icon={CheckCircle} color="emerald" />
+      </div>
 
-      <main className="p-8 space-y-12">
-
-        {/* SUMMARY */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">
-            Account Summary
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {userSummary.map((item, index) => (
-              <DashboardCard key={index} {...item} />
-            ))}
-          </div>
-        </section>
-
-        {/* BOOK ISSUE / RETURN */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">
-            Mythology Books
-          </h2>
-
-          <div className="bg-slate-900 p-6 rounded-2xl border border-white/10">
-            {books.map((book) => (
-              <div
-                key={book.id}
-                className="flex justify-between items-center py-3 border-b border-white/10 last:border-0"
-              >
-                <div>
-                  <p className="font-semibold">{book.title}</p>
-                  <p className="text-sm text-gray-400">
-                    {book.author} • {book.category}
-                  </p>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div className="p-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+           <h3 className="text-lg font-bold text-white">Digital Catalog</h3>
+           <div className="relative w-full sm:w-64">
+             <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
+             <input 
+               placeholder="Search books..." 
+               className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-blue-500"
+             />
+           </div>
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+          {books.map(book => (
+            <div key={book.id} className="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-500/30 transition duration-300 group relative overflow-hidden">
+              <div className="mb-4 relative z-10">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-[10px] font-bold tracking-wider text-blue-400 bg-blue-400/10 px-2 py-1 rounded uppercase">
+                    {book.category}
+                  </span>
+                  {book.status === "Issued" && (
+                     <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded">
+                       Rented
+                     </span>
+                  )}
                 </div>
-
-                {book.available ? (
-                  <button
-                    onClick={() => issueBook(book.id)}
-                    className="bg-emerald-600 hover:bg-emerald-700 transition px-4 py-1 rounded-lg"
-                  >
-                    Issue
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => returnBook(book.id)}
-                    className="bg-yellow-600 hover:bg-yellow-700 transition px-4 py-1 rounded-lg"
-                  >
-                    Return
-                  </button>
-                )}
+                <h4 className="font-bold text-lg text-white leading-tight mb-1">{book.title}</h4>
+                <p className="text-sm text-slate-500">{book.author}</p>
               </div>
-            ))}
-          </div>
-        </section>
-
-      </main>
-    </div>
+              
+              <div className="relative z-10 pt-4 border-t border-slate-800/50">
+                <button
+                  onClick={() => toggleStatus(book.id)}
+                  disabled={book.status === "Issued"}
+                  className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    book.status === "Available"
+                      ? "bg-white text-slate-950 hover:bg-slate-200 shadow-lg shadow-white/10"
+                      : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                  }`}
+                >
+                  {book.status === "Available" ? "Issue Now" : "Currently Unavailable"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Layout>
   );
 }
-
-export default UserDashboard;

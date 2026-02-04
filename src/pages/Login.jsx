@@ -1,129 +1,88 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { Mail, ArrowRight, Key } from "lucide-react"; // REMOVED 'Lock'
 
-function Login() {
+export default function Login() {
   const navigate = useNavigate();
-  const role = useLocation().state?.role;
-
+  const { login } = useAuth();
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [role, setRole] = useState("user");
 
-  // Allowed email domains (professional touch)
-  const allowedDomains = [
-    "gmail.com",
-    "yahoo.com",
-    "outlook.com",
-    "college.edu",
-  ];
-
-  const isValidEmail = (email) => {
-    const domain = email.split("@")[1];
-    return (
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
-      allowedDomains.includes(domain)
-    );
-  };
-
-  const handleLogin = () => {
-    if (!isValidEmail(email)) {
-      setError(
-        "Please use a valid email (Gmail, Yahoo, Outlook, or College ID)"
-      );
-      return;
-    }
-
-    if (password.length < 4) {
-      setError("Password must be at least 4 characters");
-      return;
-    }
-
-    // Save profile info (frontend simulation)
-    localStorage.setItem(
-      "userProfile",
-      JSON.stringify({
-        email,
-        role,
-        name: role === "admin" ? "Library Admin" : "Library User",
-      })
-    );
-
-    role === "admin"
-      ? navigate("/admin-dashboard")
-      : navigate("/user-dashboard");
-  };
-
-  const handleGoogleLogin = () => {
-    // Simulated Google login
-    localStorage.setItem(
-      "userProfile",
-      JSON.stringify({
-        email: "googleuser@gmail.com",
-        role,
-        name: "Google User",
-        provider: "google",
-      })
-    );
-
-    role === "admin"
-      ? navigate("/admin-dashboard")
-      : navigate("/user-dashboard");
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (!email.includes("@")) return alert("Please enter a valid email address.");
+    if (password.length < 4) return alert("Password must be at least 4 characters.");
+    
+    login(email, role);
+    navigate(role === "admin" ? "/admin" : "/user");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-indigo-950 text-white">
-      <div className="bg-slate-900/80 p-8 rounded-2xl w-full max-w-md border border-white/10">
-
-        <h2 className="text-2xl font-bold text-center mb-6">
-          {role === "admin" ? "Admin Login" : "User Login"}
-        </h2>
-
-        {error && (
-          <p className="text-red-400 text-sm mb-4">{error}</p>
-        )}
-
-        {/* Email Login */}
-        <input
-          type="email"
-          placeholder="Email address"
-          className="w-full p-3 mb-4 rounded-lg bg-black border border-white/20 focus:outline-none"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-3 mb-5 rounded-lg bg-black border border-white/20 focus:outline-none"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button
-          onClick={handleLogin}
-          className="w-full bg-blue-600 hover:bg-blue-700 transition py-3 rounded-xl font-semibold mb-4"
-        >
-          Login with Email
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center my-4">
-          <div className="flex-1 h-px bg-white/10"></div>
-          <span className="px-3 text-sm text-gray-400">OR</span>
-          <div className="flex-1 h-px bg-white/10"></div>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
+        
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-white mb-2">LMS Login</h2>
+          <p className="text-slate-400">Select your role and sign in</p>
         </div>
 
-        {/* Google Login */}
-        <button
-          onClick={handleGoogleLogin}
-          className="w-full bg-white text-black hover:bg-gray-200 transition py-3 rounded-xl font-semibold"
-        >
-          Continue with Google
-        </button>
+        {/* Role Toggle */}
+        <div className="flex bg-slate-950 p-1.5 rounded-xl mb-6 border border-slate-800">
+          {["user", "admin"].map((r) => (
+            <button
+              key={r}
+              onClick={() => setRole(r)}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg capitalize transition-all ${
+                role === r 
+                ? "bg-slate-800 text-white shadow-sm" 
+                : "text-slate-500 hover:text-slate-300"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
 
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
+          {/* Email Input */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase ml-1">Email</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-3.5 text-slate-500" size={18} />
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Password Input */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase ml-1">Password</label>
+            <div className="relative">
+              <Key className="absolute left-4 top-3.5 text-slate-500" size={18} />
+              <input
+                type="password"
+                placeholder="Enter your password"
+                className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <button className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 mt-4">
+            Sign In <ArrowRight size={18} />
+          </button>
+        </form>
       </div>
     </div>
   );
 }
-
-export default Login;

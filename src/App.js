@@ -1,28 +1,62 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { LibraryProvider } from "./context/LibraryContext";
+import "./App.css"; 
 
-import Home from "./pages/Home";
+// Pages
+import Home from "./pages/Home"; // <--- CHANGED FROM LANDING TO HOME
 import Login from "./pages/Login";
-import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import UserProfile from "./pages/UserProfile";
-import AdminProfile from "./pages/AdminProfile";
+import UserDashboard from "./pages/UserDashboard";
+import Profile from "./pages/Profile";
+
+// Security Guard
+const ProtectedRoute = ({ children, role }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-blue-500">Loading...</div>;
+  }
+
+  if (!user) return <Navigate to="/login" />;
+  if (role && user.role !== role) return <Navigate to="/" />;
+
+  return children;
+};
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <LibraryProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} /> 
+            <Route path="/login" element={<Login />} />
+            
+            {/* Protected Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
 
-        {/* User Routes */}
-        <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/user-profile" element={<UserProfile />} />
+            <Route path="/user" element={
+              <ProtectedRoute role="user">
+                <UserDashboard />
+              </ProtectedRoute>
+            } />
 
-        {/* Admin Routes */}
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/admin-profile" element={<AdminProfile />} />
-      </Routes>
-    </BrowserRouter>
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </BrowserRouter>
+      </LibraryProvider>
+    </AuthProvider>
   );
 }
 
