@@ -1,72 +1,135 @@
 import Layout from "../components/Layout";
-import StatCard from "../components/StatCard";
+import CategorySection from "../components/CategorySection";
+import BookCard from "../components/BookCard";
+import Footer from "../components/Footer"; 
 import { useLibrary } from "../context/LibraryContext";
-import { BookOpen, Clock, CheckCircle, Search } from "lucide-react";
+import { useAuth } from "../context/AuthContext"; // Import Auth to check user ID
+import { BookOpen, Clock, CheckCircle, Search, Grid, Sparkles, Layers } from "lucide-react";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export default function UserDashboard() {
-  const { books, toggleStatus } = useLibrary();
-  const myIssued = books.filter(b => b.status === "Issued").length;
+  const { books, transactions } = useLibrary(); // Import transactions
+  const { user } = useAuth(); // Get current user
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  
+  const currentCategory = searchParams.get("cat") || "trending";
+  
+  // BUG FIX: Count active transactions for THIS user
+  const myIssued = transactions.filter(t => 
+    t.userId === user?.email && t.status === "Active"
+  ).length;
+
+  const filteredBooks = books.filter(b => 
+    b.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    b.author.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Student Portal</h1>
-        <p className="text-slate-400 mt-1">Browse the catalog and manage your reading list.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <StatCard title="My Active Books" value={myIssued} icon={BookOpen} color="blue" />
-        <StatCard title="Return Due Date" value="Feb 28" icon={Clock} color="amber" />
-        <StatCard title="Pending Fines" value="$0.00" icon={CheckCircle} color="emerald" />
-      </div>
-
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="p-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-           <h3 className="text-lg font-bold text-white">Digital Catalog</h3>
-           <div className="relative w-full sm:w-64">
-             <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
-             <input 
-               placeholder="Search books..." 
-               className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-blue-500"
-             />
-           </div>
+      {/* HEADER */}
+      <div className="mb-6 flex flex-col md:flex-row justify-between items-end gap-4 animate-fade-in">
+        <div>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+            {currentCategory === "trending" ? (
+              <><Sparkles className="text-yellow-400" /> Trending Library</>
+            ) : (
+              <><Layers className="text-blue-400" /> {currentCategory} Collection</>
+            )}
+          </h1>
+          <p className="text-slate-400 mt-1 text-sm">
+            {currentCategory === "trending" 
+              ? "Explore our most popular categories." 
+              : `Browsing ${filteredBooks.filter(b => b.category === currentCategory).length} books in this category.`}
+          </p>
         </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-          {books.map(book => (
-            <div key={book.id} className="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between hover:border-blue-500/30 transition duration-300 group relative overflow-hidden">
-              <div className="mb-4 relative z-10">
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-[10px] font-bold tracking-wider text-blue-400 bg-blue-400/10 px-2 py-1 rounded uppercase">
-                    {book.category}
-                  </span>
-                  {book.status === "Issued" && (
-                     <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded">
-                       Rented
-                     </span>
-                  )}
-                </div>
-                <h4 className="font-bold text-lg text-white leading-tight mb-1">{book.title}</h4>
-                <p className="text-sm text-slate-500">{book.author}</p>
-              </div>
-              
-              <div className="relative z-10 pt-4 border-t border-slate-800/50">
-                <button
-                  onClick={() => toggleStatus(book.id)}
-                  disabled={book.status === "Issued"}
-                  className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    book.status === "Available"
-                      ? "bg-white text-slate-950 hover:bg-slate-200 shadow-lg shadow-white/10"
-                      : "bg-slate-800 text-slate-500 cursor-not-allowed"
-                  }`}
-                >
-                  {book.status === "Available" ? "Issue Now" : "Currently Unavailable"}
-                </button>
-              </div>
+
+        {/* SEARCH */}
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
+          <input 
+            placeholder="Search library..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl py-2 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-600"
+          />
+        </div>
+      </div>
+
+      {/* STATS */}
+      {!searchTerm && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-fade-in">
+          <div className="bg-slate-900/50 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Active Books</p>
+              {/* This will now update correctly! */}
+              <h3 className="text-2xl font-bold text-white mt-1">{myIssued}</h3>
             </div>
-          ))}
+            <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
+              <BookOpen size={20} />
+            </div>
+          </div>
+
+          <div className="bg-slate-900/50 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Return Due</p>
+              <h3 className="text-2xl font-bold text-white mt-1">Feb 28</h3>
+            </div>
+            <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400">
+              <Clock size={20} />
+            </div>
+          </div>
+
+          <div className="bg-slate-900/50 border border-white/10 p-4 rounded-xl flex items-center justify-between">
+            <div>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Fine Status</p>
+              {/* Currency Change */}
+              <h3 className="text-2xl font-bold text-white mt-1">₹0.00</h3>
+            </div>
+            <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
+              <CheckCircle size={20} />
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* CONTENT */}
+      <div className="min-h-[50vh]">
+        {searchTerm ? (
+           <CategorySection title="Search Results" books={filteredBooks} />
+        ) : (
+          <>
+            {currentCategory === "trending" ? (
+              <div className="space-y-8 animate-slide-up">
+                <CategorySection title="Hot in Technology" books={filteredBooks.filter(b => b.category === "Tech")} />
+                <CategorySection title="Sci-Fi Blockbusters" books={filteredBooks.filter(b => b.category === "Sci-Fi")} />
+                <CategorySection title="Timeless History" books={filteredBooks.filter(b => b.category === "History")} />
+                <CategorySection title="Popular General" books={filteredBooks.filter(b => b.category === "General")} />
+              </div>
+            ) : (
+              <div className="animate-fade-in">
+                {filteredBooks.filter(b => b.category === currentCategory).length === 0 ? (
+                  <div className="text-center py-20 text-slate-500 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
+                    <Grid size={48} className="mx-auto mb-4 opacity-20" />
+                    <p>No books found in this category.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {filteredBooks
+                      .filter(b => b.category === currentCategory)
+                      .map(book => (
+                        <BookCard key={book.id} book={book} />
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      <Footer />
     </Layout>
   );
 }
