@@ -1,13 +1,14 @@
-import { LogOut, User, BookOpen, Globe, Cpu, BookMarked, History, Sparkles } from "lucide-react"; // Removed LayoutDashboard
+import { LogOut, User, BookOpen, Globe, Cpu, BookMarked, History, Sparkles } from "lucide-react"; 
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Sidebar() {
-  const { user, logout } = useAuth(); 
+  const { logout } = useAuth(); 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const basePath = user?.role === 'admin' ? '/admin' : '/user';
+  const isPanelAdmin = location.pathname.startsWith('/admin');
+  const basePath = isPanelAdmin ? '/admin' : '/user';
 
   const categories = [
     { name: "Trending", id: "trending", icon: Sparkles },
@@ -20,27 +21,29 @@ export default function Sidebar() {
   const isActive = (catId) => {
     const params = new URLSearchParams(location.search);
     const currentCat = params.get("cat") || "trending";
-    return location.pathname === basePath && currentCat === catId;
+    // Check if the parameter matches the category ID
+    return currentCat === catId;
   };
 
   return (
     <aside className="w-64 bg-slate-900/80 backdrop-blur-xl border-r border-white/10 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300">
       
-      {/* Brand */}
+      {/* Brand Header - FIXED: Shows User Dashboard correctly */}
       <div className="p-6 border-b border-white/10 flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
           <BookOpen size={18} className="text-white" />
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-white">LMS</h2>
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Pro System</p>
+        <div className="flex flex-col">
+          <h2 className="text-sm font-bold text-white leading-tight">
+            {isPanelAdmin ? "Admin Panel" : "User Dashboard"}
+          </h2>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
         
-        {/* Section: Main */}
+        {/* Discover Section */}
         <div>
           <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
             Discover
@@ -63,7 +66,7 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Section: Account */}
+        {/* Account Section */}
         <div>
           <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
             Account

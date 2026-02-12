@@ -1,108 +1,71 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useState, useContext } from "react";
 
 const LibraryContext = createContext();
 
-// 1. DATASET WITH QUANTITIES
-const defaultBooks = [
-  // Tech
-  { id: 1, title: "The Pragmatic Programmer", author: "Andy Hunt", category: "Tech", quantity: 15 },
-  { id: 2, title: "Clean Code", author: "Robert C. Martin", category: "Tech", quantity: 20 },
-  { id: 3, title: "Design Patterns", author: "Erich Gamma", category: "Tech", quantity: 12 },
-  { id: 4, title: "Intro to Algorithms", author: "Thomas H. Cormen", category: "Tech", quantity: 8 },
-  { id: 5, title: "Refactoring UI", author: "Adam Wathan", category: "Tech", quantity: 25 },
-  
-  // Sci-Fi
-  { id: 7, title: "Dune", author: "Frank Herbert", category: "Sci-Fi", quantity: 30 },
-  { id: 8, title: "Project Hail Mary", author: "Andy Weir", category: "Sci-Fi", quantity: 18 },
-  { id: 9, title: "Neuromancer", author: "William Gibson", category: "Sci-Fi", quantity: 10 },
-  { id: 10, title: "Foundation", author: "Isaac Asimov", category: "Sci-Fi", quantity: 22 },
-  { id: 11, title: "Snow Crash", author: "Neal Stephenson", category: "Sci-Fi", quantity: 14 },
+export const useLibrary = () => useContext(LibraryContext);
 
-  // History
-  { id: 12, title: "Sapiens", author: "Yuval Noah Harari", category: "History", quantity: 40 },
-  { id: 13, title: "The Silk Roads", author: "Peter Frankopan", category: "History", quantity: 15 },
-  { id: 14, title: "Guns, Germs, and Steel", author: "Jared Diamond", category: "History", quantity: 10 },
-  { id: 15, title: "1491", author: "Charles C. Mann", category: "History", quantity: 12 },
+export const LibraryProvider = ({ children }) => {
+  // Expanded Mock Data: 18 Books
+  const [books, setBooks] = useState([
+    // --- TECH ---
+    { id: 1, title: "The Pragmatic Programmer", author: "Andy Hunt", category: "Tech", quantity: 12 },
+    { id: 2, title: "Clean Code", author: "Robert C. Martin", category: "Tech", quantity: 15 },
+    { id: 3, title: "Design Patterns", author: "Erich Gamma", category: "Tech", quantity: 5 },
+    { id: 4, title: "Introduction to Algorithms", author: "Thomas H. Cormen", category: "Tech", quantity: 8 },
+    { id: 5, title: "Refactoring UI", author: "Adam Wathan", category: "Tech", quantity: 7 },
+    { id: 6, title: "You Don't Know JS", author: "Kyle Simpson", category: "Tech", quantity: 20 },
 
-  // General
-  { id: 16, title: "Atomic Habits", author: "James Clear", category: "General", quantity: 50 },
-  { id: 17, title: "Deep Work", author: "Cal Newport", category: "General", quantity: 25 },
-  { id: 18, title: "Thinking, Fast and Slow", author: "Daniel Kahneman", category: "General", quantity: 18 },
-  { id: 19, title: "Psychology of Money", author: "Morgan Housel", category: "General", quantity: 35 },
-];
+    // --- SCI-FI ---
+    { id: 7, title: "Dune", author: "Frank Herbert", category: "Sci-Fi", quantity: 8 },
+    { id: 8, title: "Project Hail Mary", author: "Andy Weir", category: "Sci-Fi", quantity: 10 },
+    { id: 9, title: "Foundation", author: "Isaac Asimov", category: "Sci-Fi", quantity: 6 },
+    { id: 10, title: "Neuromancer", author: "William Gibson", category: "Sci-Fi", quantity: 4 },
+    { id: 11, title: "The Martian", author: "Andy Weir", category: "Sci-Fi", quantity: 12 },
 
-export function LibraryProvider({ children }) {
-  // BOOKS STATE
-  const [books, setBooks] = useState(() => {
-    // Force reset to get new quantities (change key to v3)
-    const saved = localStorage.getItem("lms_library_v3");
-    return saved ? JSON.parse(saved) : defaultBooks;
-  });
+    // --- HISTORY ---
+    { id: 12, title: "Sapiens", author: "Yuval Noah Harari", category: "History", quantity: 14 },
+    { id: 13, title: "Guns, Germs, and Steel", author: "Jared Diamond", category: "History", quantity: 9 },
+    { id: 14, title: "The Silk Roads", author: "Peter Frankopan", category: "History", quantity: 5 },
+    { id: 15, title: "1491", author: "Charles C. Mann", category: "History", quantity: 7 },
 
-  // TRANSACTIONS LOG STATE (Who took what)
-  const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem("lms_transactions");
-    return saved ? JSON.parse(saved) : [];
-  });
+    // --- GENERAL / SELF-HELP ---
+    { id: 16, title: "Atomic Habits", author: "James Clear", category: "General", quantity: 20 },
+    { id: 17, title: "Deep Work", author: "Cal Newport", category: "General", quantity: 11 },
+    { id: 18, title: "Thinking, Fast and Slow", author: "Daniel Kahneman", category: "General", quantity: 6 },
+  ]);
 
-  useEffect(() => {
-    localStorage.setItem("lms_library_v3", JSON.stringify(books));
-    localStorage.setItem("lms_transactions", JSON.stringify(transactions));
-  }, [books, transactions]);
+  // Mock Data: Transactions
+  const [transactions, setTransactions] = useState([
+    { id: 101, bookId: 7, bookTitle: "Dune", userName: "Student Member", userId: "STU-001", issueDate: "2/6/2026", status: "Active" },
+    { id: 102, bookId: 2, bookTitle: "Clean Code", userName: "John Doe", userId: "STU-042", issueDate: "2/8/2026", status: "Active" }
+  ]);
 
+  // Actions
   const addBook = (book) => {
-    const newBook = { ...book, id: Date.now(), quantity: 10 }; // Default new books to 10 copies
-    setBooks([...books, newBook]);
+    setBooks([...books, { ...book, id: Date.now() }]);
   };
 
   const deleteBook = (id) => {
     setBooks(books.filter((b) => b.id !== id));
   };
 
-  // SMART ISSUE: Decreases Stock, Adds to Log
-  const issueBook = (bookId, user) => {
-    setBooks(books.map(b => {
-      if (b.id === bookId && b.quantity > 0) {
-        // Create Transaction Log
-        const newLog = {
-          id: Date.now(),
-          bookId: b.id,
-          bookTitle: b.title,
-          userId: user.email,
-          userName: user.name,
-          issueDate: new Date().toLocaleDateString(),
-          dueDate: "Feb 28, 2026", // Simplified due date
-          status: "Active"
-        };
-        setTransactions([...transactions, newLog]);
-        return { ...b, quantity: b.quantity - 1 };
-      }
-      return b;
-    }));
-  };
+  const issueBook = (transaction) => {
+    // 1. Add the transaction record
+    setTransactions([transaction, ...transactions]);
 
-  // SMART RETURN: Increases Stock, Updates Log
-  const returnBook = (bookId, user) => {
-    // 1. Mark transaction as returned
-    const activeTx = transactions.find(t => t.bookId === bookId && t.userId === user.email && t.status === "Active");
-    if (!activeTx) return;
-
-    const updatedTx = transactions.map(t => 
-      t.id === activeTx.id ? { ...t, status: "Returned", returnDate: new Date().toLocaleDateString() } : t
+    // 2. REAL UPDATE: Decrease the book quantity by 1
+    setBooks((prevBooks) => 
+      prevBooks.map((book) => 
+        book.id === transaction.bookId 
+          ? { ...book, quantity: Math.max(0, book.quantity - 1) } // Prevent negative stock
+          : book
+      )
     );
-    setTransactions(updatedTx);
-
-    // 2. Increase stock
-    setBooks(books.map(b => 
-      b.id === bookId ? { ...b, quantity: b.quantity + 1 } : b
-    ));
   };
 
   return (
-    <LibraryContext.Provider value={{ books, transactions, addBook, deleteBook, issueBook, returnBook }}>
+    <LibraryContext.Provider value={{ books, transactions, addBook, deleteBook, issueBook }}>
       {children}
     </LibraryContext.Provider>
   );
-}
-
-export const useLibrary = () => useContext(LibraryContext);
+};
