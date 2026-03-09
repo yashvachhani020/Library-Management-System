@@ -5,8 +5,9 @@ import { LibraryProvider } from "./context/LibraryContext";
 import "./App.css"; 
 
 // Pages
-import Home from "./pages/Home"; // <--- CHANGED FROM LANDING TO HOME
+import Home from "./pages/Home"; 
 import Login from "./pages/Login";
+import Signup from "./pages/Signup"; // <--- 1. IMPORT SIGNUP
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import Profile from "./pages/Profile";
@@ -34,6 +35,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Home />} /> 
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} /> {/* <--- 2. ADD SIGNUP ROUTE */}
             
             {/* Protected Routes */}
             <Route path="/admin" element={

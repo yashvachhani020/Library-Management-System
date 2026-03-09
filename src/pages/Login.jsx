@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Mail, ArrowRight, Key } from "lucide-react"; // REMOVED 'Lock'
+import { Mail, ArrowRight, Key } from "lucide-react"; 
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,19 +9,52 @@ export default function Login() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // RESTORED: Role state
   const [role, setRole] = useState("user");
+  const [error, setError] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email.includes("@")) return alert("Please enter a valid email address.");
-    if (password.length < 4) return alert("Password must be at least 4 characters.");
+    setError("");
+
+    if (!email.includes("@")) return setError("Please enter a valid email address.");
+    if (password.length < 1) return setError("Please enter your password.");
     
-    login(email, role);
-    navigate(role === "admin" ? "/admin" : "/user");
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // SECURITY CHECK: Ensure the database role matches the selected toggle
+        if (data.user.role !== role) {
+          setError(`Access Denied: Your account is not registered as an ${role === 'admin' ? 'Administrator' : 'User'}.`);
+          return;
+        }
+
+        login(data.user); 
+        navigate(data.user.role === "admin" ? "/admin" : "/user");
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError("Failed to connect to server. Is Backend running?");
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-purple-600/10 rounded-full blur-[100px]" />
+      </div>
+
       <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10">
         
         <div className="text-center mb-8">
@@ -29,7 +62,7 @@ export default function Login() {
           <p className="text-slate-400">Select your role and sign in</p>
         </div>
 
-        {/* Role Toggle */}
+        {/* RESTORED: Role Toggle */}
         <div className="flex bg-slate-950 p-1.5 rounded-xl mb-6 border border-slate-800">
           {["user", "admin"].map((r) => (
             <button
@@ -37,7 +70,7 @@ export default function Login() {
               onClick={() => setRole(r)}
               className={`flex-1 py-2.5 text-sm font-bold rounded-lg capitalize transition-all ${
                 role === r 
-                ? "bg-slate-800 text-white shadow-sm" 
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700" 
                 : "text-slate-500 hover:text-slate-300"
               }`}
             >
@@ -45,6 +78,13 @@ export default function Login() {
             </button>
           ))}
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-6 text-center animate-fade-in">
+            {error}
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4">
@@ -82,6 +122,15 @@ export default function Login() {
             Sign In <ArrowRight size={18} />
           </button>
         </form>
+
+        {/* Sign Up Link */}
+        <div className="mt-6 text-center text-sm text-slate-400">
+          Don't have an account?{" "}
+          <button onClick={() => navigate("/signup")} className="text-blue-400 hover:text-blue-300 font-bold transition">
+            Sign Up
+          </button>
+        </div>
+
       </div>
     </div>
   );

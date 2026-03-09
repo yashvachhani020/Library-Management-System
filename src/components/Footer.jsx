@@ -48,7 +48,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="hover:text-blue-500 cursor-pointer transition">Documentation</li>
               <li className="hover:text-blue-500 cursor-pointer transition">Library Rules</li>
-              <li className="hover:text-blue-500 cursor-pointer transition">API Status</li>
+              {/* Removed API Status */}
             </ul>
           </div>
 
